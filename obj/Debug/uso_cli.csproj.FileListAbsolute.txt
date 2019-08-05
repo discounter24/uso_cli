@@ -12,3 +12,5 @@ C:\Users\pasca\Documents\GitHub\UnturnedServerOrganiser\uso_cli\obj\Debug\usocli
 C:\Users\pasca\Documents\GitHub\UnturnedServerOrganiser\uso_cli\obj\Debug\usocli.pdb
 C:\Users\pasca\Documents\GitHub\UnturnedServerOrganiser\uso_cli\bin\Debug\README.txt
 C:\Users\pasca\Documents\GitHub\UnturnedServerOrganiser\uso_cli\bin\Debug\UpdateServerAndRocketMod.bat
+C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\uso_cli.csprojAssemblyReference.cache
+C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\uso_cli.csproj.CoreCompileInputs.cache
