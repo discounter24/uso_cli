@@ -164,15 +164,7 @@ namespace uso_cli
 
         public static void RunServer(Command.Argument[] args)
         {
-            DirectoryInfo enginePath;
-            if (Program.VARS.Keys.Contains("enginepath"))
-            {
-                enginePath = new DirectoryInfo(Program.VARS["enginepath"]);
-            }
-            else
-            {
-                enginePath = new DirectoryInfo(Environment.CurrentDirectory + "\\engine\\");
-            }
+         
 
             string sid = "DefaultServer";
 
@@ -184,7 +176,7 @@ namespace uso_cli
                 }
             }
 
-            U3ServerEngineSettings settings = new U3ServerEngineSettings(new FileInfo(enginePath.FullName + "\\Unturned.exe"),sid);
+            U3ServerEngineSettings settings = new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"),sid);
 
             U3Server server = new U3Server(settings);
             U3ServerStartResult result = server.Start();
@@ -298,18 +290,62 @@ namespace uso_cli
 
         public static void AddWorkshopMod(Command.Argument[] args)
         {
-            Program.Print("coming soon");
+            string sid = null;
+            string modid = null;
+            string modlink = null;
+
+            foreach(Command.Argument arg in args)
+            {
+                if (arg.id == "serverid") sid = arg.value;
+                if (arg.id == "modid") modid = arg.value;
+                if (arg.id == "modlink") modlink = arg.value;
+            }
+
+            if (string.IsNullOrEmpty(sid))
+            {
+                Program.Print("Please pass the command argument \"serverid\".");
+                return;
+            }
+
+      
+            U3Server server = new U3Server(new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"), sid));
+
+
+            if (string.IsNullOrEmpty(modid) && string.IsNullOrEmpty(modlink))
+            {
+                Program.Print("Please pass the command argument \"modid\" or \"modlink\".",ConsoleColor.Yellow,"SteamWorkshop",ConsoleColor.Cyan);
+                return;
+            }
+            else
+            {
+                List<string> ids = new List<string>();
+                if (!string.IsNullOrEmpty(modlink))
+                {
+                    ids.AddRange(U3WorkshopMod.getIDFromWorkshopSite(modlink));
+                }
+                if (!string.IsNullOrEmpty(modid))
+                {
+                    if (!ids.Contains(modid)) ids.Add(modid);
+                }
+
+                foreach (string id in ids)
+                {
+                    server.WorkshopAutoUpdaterConfig.Add(modid);
+                }
+                
+            }
+            Program.Print("Mod(s) added!", ConsoleColor.Green, "SteamWorkshop", ConsoleColor.Cyan);
         }
 
 
         public static void RemoveWorkshopMod(Command.Argument[] args)
         {
-            Program.Print("coming soon");
+            Program.Print("not yet implemented");
         }
 
         public static void ListWorkshopMods(Command.Argument[] args)
         {
-            Program.Print("coming soon");
+            Program.Print("not yet implemented");
         }
 
 

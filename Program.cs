@@ -12,6 +12,20 @@ namespace uso_cli
     class Program
     {
         
+        public  static DirectoryInfo enginePath
+        {
+            get
+            {
+                if (Program.VARS.Keys.Contains("enginepath"))
+                {
+                   return new DirectoryInfo(Program.VARS["enginepath"]);
+                }
+                else
+                {
+                   return new DirectoryInfo(Environment.CurrentDirectory + "\\engine\\");
+                }
+            }
+        }
 
         public static Dictionary<string, string> VARS = new Dictionary<string, string>();
         public const String FullCommandRegEx = @"([a-zA-Z]+)\(([^()]*)\)";

@@ -14,3 +14,15 @@ C:\Users\pasca\Documents\GitHub\UnturnedServerOrganiser\uso_cli\bin\Debug\README
 C:\Users\pasca\Documents\GitHub\UnturnedServerOrganiser\uso_cli\bin\Debug\UpdateServerAndRocketMod.bat
 C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\uso_cli.csprojAssemblyReference.cache
 C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\uso_cli.csproj.CoreCompileInputs.cache
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\README.txt
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\UpdateServerAndRocketMod.bat
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\usocli.exe.config
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\usocli.exe
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\usocli.pdb
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\Open.Nat.xml
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\Newtonsoft.Json.xml
+C:\Users\pasca\Documents\GitHub\uso_cli\bin\Debug\ICSharpCode.SharpZipLib.xml
+C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\uso_cli.csproj.Fody.CopyLocal.cache
+C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\uso_cli.csproj.CopyComplete
+C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\usocli.exe
+C:\Users\pasca\Documents\GitHub\uso_cli\obj\Debug\usocli.pdb
