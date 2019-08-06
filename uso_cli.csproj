@@ -47,9 +47,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="UniversalOrganiserControls">
-      <HintPath>..\UniversalOrganiserControls\UniversalOrganiserControls\bin\Debug\UniversalOrganiserControls.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command.cs" />
@@ -68,6 +65,12 @@
     <Content Include="README.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalOrganiserControls\UniversalOrganiserControls\UniversalOrganiserControls.csproj">
+      <Project>{6c75343b-0c5f-4bb3-a82d-a5c0939537ec}</Project>
+      <Name>UniversalOrganiserControls</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\Fody.5.0.0\build\Fody.targets" Condition="Exists('packages\Fody.5.0.0\build\Fody.targets')" />

@@ -130,6 +130,7 @@ namespace uso_cli
         public static void SetDefaultVars()
         {
             VARS["enginePath"] = Environment.CurrentDirectory + "\\engine\\";
+            VARS["serverid"] = "DefaultServer";
         }
 
 

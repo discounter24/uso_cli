@@ -15,6 +15,10 @@ namespace uso_cli
         {
             this.RootCommand = main;
             this.Args = args;
+            for(int i = 0; i < Args.Length; i++)
+            {
+                args[0].id = args[0].id.ToLower();
+            }
         }
 
 

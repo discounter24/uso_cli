@@ -28,18 +28,35 @@ namespace uso_cli
             RegisterCommand("close", Close, "Closes the CLI tool.", "", "exit");
             RegisterCommand("ping", Ping, "Playing ping pong.");
 
-            RegisterCommand("varlist", ListVars, "Shows a list of current registred commands.", "", "listvar");
-            RegisterCommand("varset", SetVar, "Closes the CLI tool.", "varset(id)", "setvar");
-            RegisterCommand("updateengine", UpdateEngine, "Closes the CLI tool.", "updateEngine(validate)", "updateserver");
-            RegisterCommand("runserver", RunServer, "Closes the CLI tool.", "runserver(id)", "startserver");
+            RegisterCommand("varlist", ListVars, "Shows a list of current registred variables.", "", "listvar");
+            RegisterCommand("varset", SetVar, "Sets a variable used by the CLI.", "varset(id=value)", "setvar");
+            RegisterCommand("updateengine", UpdateEngine, "Updates the Unturned server files", "updateEngine(validate)", "updateserver");
+            RegisterCommand("runserver", RunServer, "Launches an Unturned server", "runserver(serverid)", "startserver");
             RegisterCommand("updaterocketmod", InstallRocketMod, "Installs or updates RocketMod.", "updaterocketmod(validate)", "installrocketmod");
 
             RegisterCommand("updatecli", UpdateCLI, "Updates this tool", "");
 
-            RegisterCommand("addmod", AddWorkshopMod);
-            RegisterCommand("removemod", RemoveWorkshopMod);
-            RegisterCommand("listmods", ListWorkshopMods);
+            RegisterCommand("addmod", AddWorkshopMod,"Installs a steam workshop mod","addmod(serverid,modid OR modlink)");
+            RegisterCommand("removemod", RemoveWorkshopMod, "Removes a steam workshop mod", "removemod(serverid, modid)");
+            RegisterCommand("listmods", ListWorkshopMods, "Lists all installed steam workshop mods", "listmods(serverid)", "modlist");
+        }
 
+        private static string GetArgument(string id, Command.Argument[] args)
+        {
+            foreach(Command.Argument arg in args)
+            {
+               
+                if (arg.id.ToLower() == id.ToLower())
+                {
+                    Program.VARS[arg.id] = arg.value;
+                    return arg.value;
+                }
+            }
+
+
+            if (Program.VARS.ContainsKey(id)) return Program.VARS[id];
+
+            return null;
         }
 
 
@@ -88,14 +105,7 @@ namespace uso_cli
         {
 
             DirectoryInfo enginePath;
-            if (Program.VARS.Keys.Contains("enginepath"))
-            {
-                enginePath = new DirectoryInfo(Program.VARS["enginepath"]);
-            }
-            else
-            {
-                enginePath = new DirectoryInfo(Environment.CurrentDirectory + "\\engine\\");
-            }
+            enginePath = new DirectoryInfo(GetArgument("enginePath", args));
 
 
             U3OnlineInstaller installer = new U3OnlineInstaller(enginePath);
@@ -164,21 +174,12 @@ namespace uso_cli
 
         public static void RunServer(Command.Argument[] args)
         {
-         
-
-            string sid = "DefaultServer";
-
-            foreach (Command.Argument arg in args)
-            {
-                if (arg.id.Equals("id"))
-                {
-                    sid = arg.value;
-                }
-            }
-
+            string sid = GetArgument("serverid", args);
+            
             U3ServerEngineSettings settings = new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"),sid);
-
             U3Server server = new U3Server(settings);
+
+            Program.Print(string.Format("Starting {0} ..", sid), ConsoleColor.Green);
             U3ServerStartResult result = server.Start();
             Console.WriteLine("ServerStartResponse: " + result.ToString());
         }
@@ -290,13 +291,12 @@ namespace uso_cli
 
         public static void AddWorkshopMod(Command.Argument[] args)
         {
-            string sid = null;
+            string sid = GetArgument("serverid", args);
             string modid = null;
             string modlink = null;
 
             foreach(Command.Argument arg in args)
             {
-                if (arg.id == "serverid") sid = arg.value;
                 if (arg.id == "modid") modid = arg.value;
                 if (arg.id == "modlink") modlink = arg.value;
             }
@@ -321,8 +321,10 @@ namespace uso_cli
                 List<string> ids = new List<string>();
                 if (!string.IsNullOrEmpty(modlink))
                 {
+
                     ids.AddRange(U3WorkshopMod.getIDFromWorkshopSite(modlink));
                 }
+
                 if (!string.IsNullOrEmpty(modid))
                 {
                     if (!ids.Contains(modid)) ids.Add(modid);
@@ -330,7 +332,7 @@ namespace uso_cli
 
                 foreach (string id in ids)
                 {
-                    server.WorkshopAutoUpdaterConfig.Add(modid);
+                    server.WorkshopAutoUpdaterConfig.Add(id);
                 }
                 
             }
@@ -340,12 +342,102 @@ namespace uso_cli
 
         public static void RemoveWorkshopMod(Command.Argument[] args)
         {
-            Program.Print("not yet implemented");
+            string sid = GetArgument("serverid",args);
+            string modid = null;
+            string modlink = null;
+
+            foreach (Command.Argument arg in args)
+            {
+                if (arg.id == "modid") modid = arg.value;
+                if (arg.id == "modlink") modlink = arg.value;
+            }
+
+            if (string.IsNullOrEmpty(sid))
+            {
+                Program.Print("Please pass the command argument \"serverid\".");
+                return;
+            }
+
+
+            U3Server server = new U3Server(new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"), sid));
+
+
+            if (string.IsNullOrEmpty(modid) && string.IsNullOrEmpty(modlink))
+            {
+                Program.Print("Please pass the command argument \"modid\" or \"modlink\".", ConsoleColor.Yellow, "SteamWorkshop", ConsoleColor.Cyan);
+                return;
+            }
+            else
+            {
+                List<string> ids = new List<string>();
+                if (!string.IsNullOrEmpty(modlink))
+                {
+
+                    ids.AddRange(U3WorkshopMod.getIDFromWorkshopSite(modlink));
+                }
+
+                if (!string.IsNullOrEmpty(modid))
+                {
+                    if (!ids.Contains(modid)) ids.Add(modid);
+                }
+
+                foreach (string id in ids)
+                {
+                    server.WorkshopAutoUpdaterConfig.Remove(id,true);
+                }
+
+            }
+            Program.Print("Mod(s) removed!", ConsoleColor.Green, "SteamWorkshop", ConsoleColor.Cyan);
         }
 
         public static void ListWorkshopMods(Command.Argument[] args)
         {
-            Program.Print("not yet implemented");
+            string sid = GetArgument("serverid", args);
+
+            if (string.IsNullOrEmpty(sid))
+            {
+                Program.Print("Please pass the command argument \"serverid\".");
+                return;
+            }
+
+
+            U3Server server = new U3Server(new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"), sid));
+
+            Program.Print(string.Format("Searching mods for {0} ..",sid), ConsoleColor.White, "SteamWorkshop", ConsoleColor.Cyan);
+
+
+            string output = string.Format("{0} mod(s) registered in UpdaterConfig.\n", server.WorkshopAutoUpdaterConfig.RegistredMods.Count);
+            output += string.Format("{0} mod(s) installed.\n", server.WorkshopAutoUpdaterConfig.InstalledMods.ToArray().Length);
+
+            output += "Registered in UpdaterConfig: {";
+            string title;
+            foreach(string modid in server.WorkshopAutoUpdaterConfig.RegistredMods)
+            {
+                title = U3WorkshopMod.getModTitle(modid);
+                output += !string.IsNullOrEmpty(title) ? string.Format("{0}({1}),", modid, title) : modid + ",";
+            }
+            if (output.EndsWith(",")) output = output.Remove(output.Length - 1,1);
+            output += "}\n";
+
+            output += "Installed maps: {";
+            foreach (U3WorkshopMod mod in server.WorkshopAutoUpdaterConfig.InstalledMapMods)
+            {
+                output += !string.IsNullOrEmpty(mod.Title) ? string.Format("{0}({1}),", mod.ID, mod.Title) + "," : mod.ID + ",";
+            }
+            if (output.EndsWith(",")) output = output.Remove(output.Length - 1, 1);
+            output += "}\n";
+
+            output += "Installed object mods: {";
+            foreach (U3WorkshopMod mod in server.WorkshopAutoUpdaterConfig.InstalledContentMods)
+            {
+                output += !string.IsNullOrEmpty(mod.Title) ? string.Format("{0}({1}),",mod.ID,mod.Title) : mod.ID + ",";
+            }
+            if (output.EndsWith(",")) output = output.Remove(output.Length - 1, 1);
+            output += "}\n";
+
+            Program.Print(output, ConsoleColor.White);
+            
+            
         }
 
 
