@@ -39,6 +39,7 @@ namespace uso_cli
             RegisterCommand("addmod", AddWorkshopMod,"Installs a steam workshop mod","addmod(serverid,modid OR modlink)");
             RegisterCommand("removemod", RemoveWorkshopMod, "Removes a steam workshop mod", "removemod(serverid, modid)");
             RegisterCommand("listmods", ListWorkshopMods, "Lists all installed steam workshop mods", "listmods(serverid)", "modlist");
+            RegisterCommand("script", executeScript, "Runs all commands defined in a script file", "script(file)");
         }
 
         private static string GetArgument(string id, Command.Argument[] args)
@@ -436,8 +437,34 @@ namespace uso_cli
             output += "}\n";
 
             Program.Print(output, ConsoleColor.White);
-            
-            
+                 
+        }
+
+
+        public static void executeScript(Command.Argument[] args)
+        {
+            string scriptFilePath = GetArgument("file",args);
+            if (string.IsNullOrEmpty(scriptFilePath))
+            {
+                Program.Print("Please pass the argument \"file\"", ConsoleColor.Red);
+                return;
+            }
+            FileInfo scriptFile = new FileInfo(scriptFilePath);
+            if (scriptFile.Exists)
+            {
+                Program.Print("Executing script..", ConsoleColor.DarkGray);
+                string[] commands = File.ReadAllLines(scriptFilePath);
+                foreach(string command in commands)
+                {
+                    Program.Print(command, ConsoleColor.White, "Script", ConsoleColor.Cyan);
+                    Program.ExecuteCommand(command).Wait();
+                }
+            }
+            else
+            {
+                Program.Print("Script file not found!", ConsoleColor.Red);
+            }
+
         }
 
 

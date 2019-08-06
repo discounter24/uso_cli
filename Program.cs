@@ -87,10 +87,9 @@ namespace uso_cli
             Print("Unturned Server Organiser CLI", ConsoleColor.Green);
             Program.Print("Version hash: " + CalculateMD5(AppDomain.CurrentDomain.FriendlyName), ConsoleColor.DarkGray);
 
-            if (!Environment.GetCommandLineArgs().Contains("noupdate"))
-            {
-                ProcessUpdate();
-            }
+            
+            ProcessUpdate();
+            
 
             Console.ForegroundColor = ConsoleColor.White;
             CommandCollection.RegisterCommands();
@@ -103,10 +102,19 @@ namespace uso_cli
 
         public static void ProcessUpdate()
         {
+            string[] args = Environment.GetCommandLineArgs();
+            if (args.Length > 1)
+            {
+                Program.Print("CLI-Update skipped to execute process arguments.", ConsoleColor.DarkGray);
+                return;
+            }
+           
+
+
             string currentFile = AppDomain.CurrentDomain.FriendlyName;
             if (currentFile.StartsWith("_"))
             {
-                Program.Print("Updating...", ConsoleColor.DarkGray);
+                Program.Print("Updating...", ConsoleColor.White, "CLI-Updater",ConsoleColor.Green);
                 Task.Delay(1000).Wait();
                 File.Delete(currentFile.Remove(0, 1));
                 File.Copy(currentFile, currentFile.Remove(0, 1), true);
@@ -141,7 +149,6 @@ namespace uso_cli
             Console.ForegroundColor = ConsoleColor.White;
             return Console.ReadLine();
         }
-
 
         public static Task ExecuteCommand(String cmd)
         {
