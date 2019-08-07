@@ -6,16 +6,19 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Security.Cryptography;
+using UniversalOrganiserControls.Unturned3.UCB;
+using UniversalOrganiserControls.Unturned3;
 
 namespace uso_cli
 {
     class Program
     {
-        
+        public static bool DEV_MODE = false;
+
         public  static DirectoryInfo enginePath
         {
             get
-            {
+            { 
                 if (Program.VARS.Keys.Contains("enginepath"))
                 {
                    return new DirectoryInfo(Program.VARS["enginepath"]);
@@ -26,6 +29,10 @@ namespace uso_cli
                 }
             }
         }
+
+        public static UCBManager UCB;
+        public static List<U3Server> SERVERS = new List<U3Server>();
+
 
         public static Dictionary<string, string> VARS = new Dictionary<string, string>();
         public const String FullCommandRegEx = @"([a-zA-Z]+)\(([^()]*)\)";
@@ -59,16 +66,35 @@ namespace uso_cli
 
             while (!RequestExit)
             {
-                ExecuteCommand(NextCommand()).Wait();
+                string cmd = NextCommand();
+                if (!string.IsNullOrEmpty(cmd))
+                {
+                    ExecuteCommand(cmd).Wait();
+                }             
             }
 
 
             Console.ForegroundColor = ConsoleColor.White;
+
+            if (Program.UCB != null) CommandCollection.StopUCBServer();
         }
 
         public static void Print(string line, ConsoleColor lineColor = ConsoleColor.White, string prefix = "", ConsoleColor prefixColor = ConsoleColor.White, bool clear = false)
         {
             if (clear) Console.Clear();
+            ClearLine();
+            
+            
+            /*string before = "";
+            
+            if (Console.CursorLeft > 0)
+            {
+                before = GetGurrentLine();
+                ClearLine();
+            } 
+            */
+
+           
 
             if (prefix != "")
             {
@@ -79,7 +105,35 @@ namespace uso_cli
             Console.ForegroundColor = lineColor;
             Console.WriteLine(line);
 
+            Console.ForegroundColor = ConsoleColor.White;
+
         }
+
+        public static string GetGurrentLine()
+        {
+            int left = Console.CursorLeft;
+            int top = Console.CursorTop;
+
+            Console.SetCursorPosition(0, top);
+            string line = Console.ReadLine();
+            Console.SetCursorPosition(left, top);
+
+            return line;
+        }
+
+        public static void ClearLine()
+        {
+            int position = Console.CursorLeft;
+            if (position == 0) return;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            for (int i = 0; i < position; i++)
+            {
+                Console.Write(" ");
+            }
+
+            Console.SetCursorPosition(0, Console.CursorTop);
+        }
+
 
         public static void BootUp()
         {
@@ -87,9 +141,7 @@ namespace uso_cli
             Print("Unturned Server Organiser CLI", ConsoleColor.Green);
             Program.Print("Version hash: " + CalculateMD5(AppDomain.CurrentDomain.FriendlyName), ConsoleColor.DarkGray);
 
-            
             ProcessUpdate();
-            
 
             Console.ForegroundColor = ConsoleColor.White;
             CommandCollection.RegisterCommands();
@@ -137,8 +189,9 @@ namespace uso_cli
 
         public static void SetDefaultVars()
         {
-            VARS["enginePath"] = Environment.CurrentDirectory + "\\engine\\";
-            VARS["serverid"] = "DefaultServer";
+            VAR("enginePath", Environment.CurrentDirectory + "\\engine\\");
+            VAR("serverid", "DefaultServer");
+            VAR("ucbport", "3999");
         }
 
 
@@ -148,6 +201,26 @@ namespace uso_cli
             Console.Write("USO CLI> ");
             Console.ForegroundColor = ConsoleColor.White;
             return Console.ReadLine();
+        }
+
+        public static void VAR(string id, string val)
+        {
+            //Console.WriteLine(id + "   " + val);
+            id = id.ToLower();
+            Program.VARS[id] = val;
+            switch (id)
+            {
+                case "developmentkey":
+                    if (val.Equals("jLChQt03iVFWtXT2xY$8Ng^aDSPgVq", StringComparison.CurrentCultureIgnoreCase));
+                    {
+                        CommandCollection.RegisterDevCommands();
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+
         }
 
         public static Task ExecuteCommand(String cmd)
@@ -234,6 +307,16 @@ namespace uso_cli
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                 }
             }
+        }
+
+        public static U3Server FindServer(string serverid)
+        {
+            foreach(U3Server server in SERVERS)
+            {
+                if (server.ServerInformation.ServerID.Equals(serverid)) return server;
+            }
+
+            return null;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace uso_cli
         public static Dictionary<string, string> commandDescriptions = new Dictionary<string, string>();
         public static Dictionary<string, string> commandUsages = new Dictionary<string, string>();
 
-        public delegate void CommandDelegation(Command.Argument[] args);
+        public delegate void CommandDelegation(params Command.Argument[] args);
 
 
         public static void RegisterCommands()
@@ -39,10 +39,23 @@ namespace uso_cli
             RegisterCommand("addmod", AddWorkshopMod,"Installs a steam workshop mod","addmod(serverid,modid OR modlink)");
             RegisterCommand("removemod", RemoveWorkshopMod, "Removes a steam workshop mod", "removemod(serverid, modid)");
             RegisterCommand("listmods", ListWorkshopMods, "Lists all installed steam workshop mods", "listmods(serverid)", "modlist");
-            RegisterCommand("script", executeScript, "Runs all commands defined in a script file", "script(file)");
+            RegisterCommand("script", ExecuteScript, "Runs all commands defined in a script file", "script(file)");
+
+            RegisterCommand("runucbserver", RunUCBServer, "!!EXPERIMENTAL FEATURE!! Starts the Unturned Console Bridge Server", "runucbserver(port)");
+            RegisterCommand("stopucbserver", StopUCBServer, "!!EXPERIMENTAL FEATURE!! Stops the Unturned Console Bridge Server");
+            RegisterCommand("ucbinfo", UCBStatus, "!!EXPERIMENTAL FEATURE!! Shows some information about the Unturned Console Bridge Server");
+            RegisterCommand("clear", (Command.Argument[] args) => { Console.Clear(); }, "Clears the console output", "clear", "cls");
         }
 
-        private static string GetArgument(string id, Command.Argument[] args)
+        public static void RegisterDevCommands()
+        {
+            Program.Print("Adding dev commands..", ConsoleColor.Magenta, "DEV MODE", ConsoleColor.Yellow);
+
+            RegisterCommand("pause", Pause, "Lets the CLI wait for user input");
+            RegisterCommand("ucbcmd", UCBCommand, "Lets the CLI wait for user input","ucbcmd(serverid,cmd)");
+        }
+
+        private static string GetArgument(string id, params Command.Argument[] args)
         {
             foreach(Command.Argument arg in args)
             {
@@ -76,12 +89,12 @@ namespace uso_cli
         }
 
 
-        public static void Close(Command.Argument[] args)
+        public static void Close(params Command.Argument[] args)
         {
             Program.RequestExit = true;
         }
 
-        public static void Ping(Command.Argument[] args)
+        public static void Ping(params Command.Argument[] args)
         {
             uint count = 1;
             foreach(Command.Argument arg in args)
@@ -102,11 +115,10 @@ namespace uso_cli
         }
 
 
-        public static void UpdateEngine(Command.Argument[] args)
+        public static void UpdateEngine(params Command.Argument[] args)
         {
 
-            DirectoryInfo enginePath;
-            enginePath = new DirectoryInfo(GetArgument("enginePath", args));
+            DirectoryInfo enginePath = Program.enginePath;
 
 
             U3OnlineInstaller installer = new U3OnlineInstaller(enginePath);
@@ -173,29 +185,42 @@ namespace uso_cli
             }
         }
 
-        public static void RunServer(Command.Argument[] args)
+        public static void RunServer(params Command.Argument[] args)
         {
             string sid = GetArgument("serverid", args);
-            
-            U3ServerEngineSettings settings = new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"),sid);
-            U3Server server = new U3Server(settings);
 
-            Program.Print(string.Format("Starting {0} ..", sid), ConsoleColor.Green);
+
+            U3Server server = Program.FindServer(sid);
+            if (server == null)
+            {
+                U3ServerEngineSettings settings = new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"), sid);
+                server = new U3Server(settings);
+                Program.SERVERS.Add(server);
+            }
+
+            if (Program.UCB != null)
+            {
+                server.UCBManager = Program.UCB;
+            }
+
+            Program.Print(string.Format("Starting {0} ..", sid), ConsoleColor.White);
             U3ServerStartResult result = server.Start();
-            Console.WriteLine("ServerStartResponse: " + result.ToString());
+            Console.WriteLine("ServerStartResponse: " + result.ToString(),ConsoleColor.White);
         }
 
 
-        public static void SetVar(Command.Argument[] args)
+        public static void SetVar(params Command.Argument[] args)
         {
             foreach(Command.Argument arg in args)
             {
-                Program.VARS[arg.id.ToLower()] = arg.value;
+                Program.VAR(arg.id.ToLower(), arg.value);
                 Console.WriteLine("set variable " + arg.id + " to " + arg.value);
             }
         }
 
-        public static void ListVars(Command.Argument[] args)
+        
+
+        public static void ListVars(params Command.Argument[] args)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
             foreach (string id in Program.VARS.Keys)
@@ -213,7 +238,7 @@ namespace uso_cli
 
 
 
-        public static void Help(Command.Argument[] args)
+        public static void Help(params Command.Argument[] args)
         {
             Program.Print("Commands have the following syntax: cmd(argumentId=argumentValue)", ConsoleColor.Yellow);
 
@@ -232,7 +257,7 @@ namespace uso_cli
         }
 
 
-        public static void InstallRocketMod(Command.Argument[] args)
+        public static void InstallRocketMod(params Command.Argument[] args)
         {
             bool validate = false;
             foreach (Command.Argument arg in args)
@@ -240,7 +265,7 @@ namespace uso_cli
                 if (arg.id.ToLower().Equals("validate")) validate = Convert.ToBoolean(arg.value.ToLower());
             }
 
-            RocketModInstaller installer = new RocketModInstaller(new DirectoryInfo(Program.VARS["enginePath"]));
+            RocketModInstaller installer = new RocketModInstaller(Program.enginePath);
 
             Program.Print("Searching for RocketMod Updates..", ConsoleColor.White, "RocketMod", ConsoleColor.Cyan);
             string serverVersion = installer.GetServerVersion().Result;
@@ -263,7 +288,7 @@ namespace uso_cli
         }
 
 
-        public static void UpdateCLI(Command.Argument[] args)
+        public static void UpdateCLI(params Command.Argument[] args)
         {
             string downloadUrl = "http://update.unturned-server-organiser.com/usocli.exe";
             string versionUrl = "http://update.unturned-server-organiser.com/CLIVersion.php";
@@ -290,7 +315,7 @@ namespace uso_cli
         }
 
 
-        public static void AddWorkshopMod(Command.Argument[] args)
+        public static void AddWorkshopMod(params Command.Argument[] args)
         {
             string sid = GetArgument("serverid", args);
             string modid = null;
@@ -341,7 +366,7 @@ namespace uso_cli
         }
 
 
-        public static void RemoveWorkshopMod(Command.Argument[] args)
+        public static void RemoveWorkshopMod(params Command.Argument[] args)
         {
             string sid = GetArgument("serverid",args);
             string modid = null;
@@ -391,7 +416,7 @@ namespace uso_cli
             Program.Print("Mod(s) removed!", ConsoleColor.Green, "SteamWorkshop", ConsoleColor.Cyan);
         }
 
-        public static void ListWorkshopMods(Command.Argument[] args)
+        public static void ListWorkshopMods(params Command.Argument[] args)
         {
             string sid = GetArgument("serverid", args);
 
@@ -441,7 +466,7 @@ namespace uso_cli
         }
 
 
-        public static void executeScript(Command.Argument[] args)
+        public static void ExecuteScript(params Command.Argument[] args)
         {
             string scriptFilePath = GetArgument("file",args);
             if (string.IsNullOrEmpty(scriptFilePath))
@@ -467,6 +492,140 @@ namespace uso_cli
 
         }
 
+
+        public static void UCBStatus(params Command.Argument[] args)
+        {
+            if (Program.UCB != null)
+            {
+
+                Program.Print("The server is running. Here some more information:", ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+
+                string output = "";
+                output += "Known Unturned servers: {";
+                foreach (U3Server s in Program.UCB.AvailableServers)
+                {
+                    output += s.ServerInformation.ServerID + ",";
+                }
+                if (output.EndsWith(",")) output = output.Remove(output.Length - 1, 1);
+                output += "}\n";
+
+                output += "Actually connected Unturned servers: {";
+                foreach (U3Server s in Program.UCB.IdentifiedServers.Values)
+                {
+                    output += s.ServerInformation.ServerID +  ",";
+                }
+
+                if (output.EndsWith(",")) output = output.Remove(output.Length - 1, 1);
+                output += "}\n";
+
+
+                Program.Print(output, ConsoleColor.White);
+            }
+            else
+            {
+                Program.Print("The UCB server is not running!", ConsoleColor.Green, "UCB", ConsoleColor.Cyan);
+            }
+        }
+
+        public static void StopUCBServer(params Command.Argument[] args)
+        {
+            if (Program.UCB != null)
+            {
+                Program.Print("Stopping server..", ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+                Program.UCB.Shutdown();
+                Program.UCB = null;
+                Program.Print("UCB Server stopped.", ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+            }
+            else
+            {
+                Program.Print("There is no UCB server running!", ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+            }
+        }
+
+        public static void RunUCBServer(params Command.Argument[] args)
+        {
+            if (Program.UCB == null)
+            {
+                int port = 0;
+                try
+                {
+                    port = Convert.ToInt32(GetArgument("ucbport", args));
+                }
+                catch (Exception) { }
+
+                if (port == 0)
+                {
+                    Program.Print("Please pass the argument \"ucbport\"", ConsoleColor.Red);
+                    return;
+                }
+
+                Program.Print(string.Format("Starting UCB Server on port {0} ..", port), ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+
+                Program.UCB = new UCBManager(port);
+                
+                foreach(DirectoryInfo serverDir in new DirectoryInfo(Program.enginePath.FullName + "\\Servers\\").GetDirectories())
+                {
+                    U3Server s = Program.FindServer(serverDir.Name);                
+                    if (s == null)
+                    {
+                        s = new U3Server(new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"), serverDir.Name));
+                        Program.SERVERS.Add(s);
+                    }
+                    s.UCBManager = Program.UCB;
+                }
+
+              
+                
+                Program.UCB.ServerIdentified += UCB_ServerIdentified;
+                Program.UCB.ServerDisconnected += UCB_ServerDisconnected;
+               
+
+
+                Program.Print(string.Format("UCB server started!",port), ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+            }
+            else
+            {
+                Program.Print("The UCB Server is already running!", ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+            }
+
+            
+        }
+
+        private static void UCB_ServerDisconnected(object sender, U3Server e)
+        {
+            Program.Print(string.Format("Server disconnected from UCB: {0}", e.ServerInformation.ServerID), ConsoleColor.White, "UCB", ConsoleColor.Cyan);
+        }
+
+        private static void UCB_ServerIdentified(object sender, U3Server e)
+        {
+            Program.Print(string.Format("Server connected to UCB: {0}", e.ServerInformation.ServerID),ConsoleColor.White,"UCB",ConsoleColor.Cyan);
+        }
+
+
+        public static void UCBCommand(params Command.Argument[] args)
+        {
+            string serverid = GetArgument("serverid",args);
+            string cmd = GetArgument("cmd",args);
+            U3Server server = Program.SERVERS.First((U3Server s) => (s.ServerInformation.ServerID.Equals(serverid)));
+            server.SendCommand(cmd);
+        }
+
+        public static void Pause(params Command.Argument[] args)
+        {
+            int time = Convert.ToInt32(GetArgument("time",args));
+            if (time > 0)
+            {
+                Program.Print("Waiting " + time + " seconds before continue..");
+                Task.Delay(1000 * time).Wait();
+            }
+            else
+            {
+                Console.Write("Press any key to continue..");
+                Console.ReadKey();
+                Console.WriteLine("");
+            }
+
+        }
 
     }
 }

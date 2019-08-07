@@ -71,6 +71,10 @@
       <Project>{6c75343b-0c5f-4bb3-a82d-a5c0939537ec}</Project>
       <Name>UniversalOrganiserControls</Name>
     </ProjectReference>
+    <ProjectReference Include="..\UnturnedServerOrganiser\OrganiserNetworking\OrganiserNetworking.csproj">
+      <Project>{ead268aa-59bd-4cf7-8f4f-5033968162e3}</Project>
+      <Name>OrganiserNetworking</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\Fody.5.0.0\build\Fody.targets" Condition="Exists('packages\Fody.5.0.0\build\Fody.targets')" />
