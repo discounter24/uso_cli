@@ -41,10 +41,8 @@ namespace uso_cli
             RegisterCommand("listmods", ListWorkshopMods, "Lists all installed steam workshop mods", "listmods(serverid)", "modlist");
             RegisterCommand("script", ExecuteScript, "Runs all commands defined in a script file", "script(file)");
 
-            RegisterCommand("runucbserver", RunUCBServer, "!!EXPERIMENTAL FEATURE!! Starts the Unturned Console Bridge Server", "runucbserver(port)");
-            RegisterCommand("stopucbserver", StopUCBServer, "!!EXPERIMENTAL FEATURE!! Stops the Unturned Console Bridge Server");
-            RegisterCommand("ucbinfo", UCBStatus, "!!EXPERIMENTAL FEATURE!! Shows some information about the Unturned Console Bridge Server");
             RegisterCommand("clear", (Command.Argument[] args) => { Console.Clear(); }, "Clears the console output", "clear", "cls");
+            RegisterCommand("echo", Echo, "Simple echo command", "echo(text)");
         }
 
         public static void RegisterDevCommands()
@@ -52,7 +50,12 @@ namespace uso_cli
             Program.Print("Adding dev commands..", ConsoleColor.Magenta, "DEV MODE", ConsoleColor.Yellow);
 
             RegisterCommand("pause", Pause, "Lets the CLI wait for user input");
+
+
+            RegisterCommand("runucbserver", RunUCBServer, "!!EXPERIMENTAL FEATURE!! Starts the Unturned Console Bridge Server", "runucbserver(port)");
+            RegisterCommand("stopucbserver", StopUCBServer, "!!EXPERIMENTAL FEATURE!! Stops the Unturned Console Bridge Server");
             RegisterCommand("ucbcmd", UCBCommand, "Lets the CLI wait for user input","ucbcmd(serverid,cmd)");
+            RegisterCommand("ucbinfo", UCBStatus, "!!EXPERIMENTAL FEATURE!! Shows some information about the Unturned Console Bridge Server");
         }
 
         private static string GetArgument(string id, params Command.Argument[] args)
@@ -88,6 +91,16 @@ namespace uso_cli
             }
         }
 
+        public static void Echo(params Command.Argument[] args)
+        {
+            foreach(Command.Argument arg in args)
+            {
+                if (arg.id.Equals("text"))
+                {
+                    Program.Print(arg.value, ConsoleColor.White, "ECHO", ConsoleColor.Cyan);
+                }
+            }
+        }
 
         public static void Close(params Command.Argument[] args)
         {
@@ -318,13 +331,14 @@ namespace uso_cli
         public static void AddWorkshopMod(params Command.Argument[] args)
         {
             string sid = GetArgument("serverid", args);
-            string modid = null;
-            string modlink = null;
+            List<string> modids = new List<string>();
+            List<string> modlinks = new List<string>();
+
 
             foreach(Command.Argument arg in args)
             {
-                if (arg.id == "modid") modid = arg.value;
-                if (arg.id == "modlink") modlink = arg.value;
+                if (arg.id == "modid") modids.Add(arg.value);
+                if (arg.id == "modlink") modlinks.Add(arg.value);
             }
 
             if (string.IsNullOrEmpty(sid))
@@ -337,30 +351,23 @@ namespace uso_cli
             U3Server server = new U3Server(new U3ServerEngineSettings(new FileInfo(Program.enginePath.FullName + "\\Unturned.exe"), sid));
 
 
-            if (string.IsNullOrEmpty(modid) && string.IsNullOrEmpty(modlink))
+            if (modids.Count == 0 && modlinks.Count == 0)
             {
                 Program.Print("Please pass the command argument \"modid\" or \"modlink\".",ConsoleColor.Yellow,"SteamWorkshop",ConsoleColor.Cyan);
                 return;
             }
             else
             {
-                List<string> ids = new List<string>();
-                if (!string.IsNullOrEmpty(modlink))
+               
+                foreach(string modlink in modlinks)
                 {
-
-                    ids.AddRange(U3WorkshopMod.getIDFromWorkshopSite(modlink));
+                    modids.AddRange(U3WorkshopMod.getIDFromWorkshopSite(modlink));
                 }
 
-                if (!string.IsNullOrEmpty(modid))
-                {
-                    if (!ids.Contains(modid)) ids.Add(modid);
-                }
-
-                foreach (string id in ids)
+                foreach (string id in modids)
                 {
                     server.WorkshopAutoUpdaterConfig.Add(id);
                 }
-                
             }
             Program.Print("Mod(s) added!", ConsoleColor.Green, "SteamWorkshop", ConsoleColor.Cyan);
         }

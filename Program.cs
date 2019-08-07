@@ -205,7 +205,6 @@ namespace uso_cli
 
         public static void VAR(string id, string val)
         {
-            //Console.WriteLine(id + "   " + val);
             id = id.ToLower();
             Program.VARS[id] = val;
             switch (id)
